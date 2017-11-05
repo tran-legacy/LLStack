@@ -18,6 +18,10 @@
 // Prototypes 
 int postFixCalc(const std::string& str); 
 void performOperator(const char oper, LLStack<int>& stack);
+bool isSpace(const char c, std::string& temp, LLStack<int>& stack); 
+bool isNumber(const char c, std::string& temp, LLStack<int>& stack);
+bool isOperator(const char c, LLStack<int>& stack);
+bool isEndLine(const char c, const std::string& temp, LLStack<int>& stack);
 
 int main(int argc, char* *argv) {
 	std::string line = ""; 
@@ -38,8 +42,9 @@ int main(int argc, char* *argv) {
 	else if (argc == 1) {
 		std::cout << "Enter the post-fix expression: "; 
 		std::getline(std::cin,line);
-		line += '\n'; 
+		line += '\n';
 		std::cout << postFixCalc(line) << std::endl; 
+	
 	} 
 	// Else there is more than one file that was inputted on the cmd line
 	else {
@@ -57,45 +62,20 @@ int postFixCalc(const std::string& str) {
 	for (int i = 0; i < str.size(); ++i) {
 		// If current char is a space and temp contains something, convert
 		// temp into an int and push it onto the stack 
-		if (str[i] == ' ') {
-			if (!temp.empty()) {
-				stack.push(std::stoi(temp));
-				temp = ""; // Reset temp 
-			}
-		}
+		if (isSpace(str[i], temp, stack)) {}
 
 		// Else if current char is a number, append to temp
-		else if (str[i] >= '0' && str[i] <= '9') {
-			temp += str[i]; 
-		}
+		else if (isNumber(str[i], temp, stack)) {}
 
 		// else if the current char is an operator
-		else if (str[i] == '+' || str[i] == '-' || str[i] == '*' || str[i] == '/') { 
-			// If the stack has at least 2 items in it, perform the operator
-			if (stack.size() >= 2) {
-				performOperator(str[i], stack);
-			// else the stack has 1 and therefore can't perform the operator
-			} else { 
-				std::cout << "Too many operators" << std::endl; 
-				throw std::logic_error(""); 
-			}
-		}
+		else if (isOperator(str[i], stack)) {}
 
 		// else if this is the newline char
-		else if (str[i] == '\n') {
-			// If stack size is more than 1, there are too many numbers 
-		   	if (stack.size() > 1 || (!temp.empty())) {
-				std::cout << "Too many numbers" << std::endl;
-			   	throw std::logic_error("");	
-			// else the stack size is 1, then break and return final result
-			} else {
-				break; 
-			}
-		}
+		else if(isEndLine(str[i], temp, stack)) {}
 
 		// else user tried to input characters that aren't digits or operators 	
 	   	else {
-			std::cout << "Invalid input(s)." << std::endl;
+			std::cout << "ERROR: Invalid input(s)." << std::endl;
 			throw std::logic_error("");
 		}
 	}	
@@ -104,6 +84,52 @@ int postFixCalc(const std::string& str) {
 	return stack.top(); 	
 }
 
+bool isSpace(const char c, std::string& temp, LLStack<int>& stack) {
+	if (c == ' ') {
+		if (!temp.empty()) {
+			stack.push(std::stoi(temp)); 
+			temp = ""; // Reset temp 
+		}
+		return true; 
+	}
+	return false;
+}
+
+bool isNumber(const char c, std::string& temp, LLStack<int>& stack) {
+    if (c >= '0' && c <= '9') {
+          temp += c;
+  		return true;
+      }
+    return false; 
+}
+
+bool isOperator(const char c, LLStack<int>& stack) {
+	if (c == '+' || c == '-' || c == '*' || c == '/') { 
+		// If the stack has at least 2 items in it, perform the operator
+		if (stack.size() >= 2) {
+			performOperator(c, stack);
+		// else the stack has 1 and therefore can't perform the operator
+		} else {
+		    std::cout << "ERROR: Too many operators" << std::endl;	
+			throw std::logic_error(""); 
+		}
+		return true;
+	}
+	return false;
+}
+
+bool isEndLine(const char c, const std::string& temp, LLStack<int>& stack) {
+	if (c == '\n') {
+		// If stack size is more than 1, there are too many numbers 
+	   	if (stack.size() > 1 || (!temp.empty())) {
+			std::cout << "ERROR: Too many numbers" << std::endl;
+		   	throw std::logic_error("");	
+		// else the stack size is 1, then break and return final result
+		}
+		return true; 
+	}
+	return false; 	
+}
 //// Pop the two int on top of the stacks, perform the operator, and push result ////
 void performOperator(const char oper, LLStack<int>& stack) {
 	int num1 = stack.top(); 
